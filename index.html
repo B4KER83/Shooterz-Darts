@@ -49,7 +49,6 @@
 <body oncontextmenu="return false;">
 <div id="app">
 
-    <!-- HEADER IMAGE ADDED -->
     <img src="shooterz.jpg" alt="Shooterz Header" style="width:100%; max-width:500px; display:block; margin:0 auto;">
 
     <div id="settings-bar">
@@ -64,14 +63,293 @@
         </div>
     </div>
 
-    <!-- rest of your code unchanged -->
+    <div id="modal">
+        <div class="modal-content">
+            <div style="color:var(--accent); font-size:28px; font-weight:900; margin-bottom:20px;">GAME SHOT</div>
+            <div style="font-size:24px; margin:20px 0;">WINNER: <span id="win-name" style="color:#fff"></span></div>
+            <button class="reset-btn" onclick="resetGame(true)">START NEW LEG</button>
+        </div>
+    </div>
 
-    <!-- KEEP EVERYTHING BELOW EXACTLY AS YOU HAD IT -->
+    <div id="scoreboard">
+        <div id="p0-card" class="player-card active">
+            <div class="player-name" id="p0-name" onclick="editName(0)">PLAYER 1 (0)</div>
+            <div class="score" id="p0-score" onclick="setGameType()">501</div>
+            <div class="avg" id="p0-avg">AVG: 0.00</div>
+        </div>
+        <div id="p1-card" class="player-card">
+            <div class="player-name" id="p1-name" onclick="editName(1)">PLAYER 2 (0)</div>
+            <div class="score" id="p1-score" onclick="setGameType()">501</div>
+            <div class="avg" id="p1-avg">AVG: 0.00</div>
+        </div>
+    </div>
     
+    <div id="status-area">
+        <div id="visit-line"></div>
+        <div id="guide-line"></div>
+        <div class="dart-slots" id="slots-ui" style="visibility: hidden;">
+            <div id="dart-0" class="dart"></div>
+            <div id="dart-1" class="dart"></div>
+            <div id="dart-2" class="dart"></div>
+        </div>
+    </div>
+
+    <div id="keypad">
+        <div class="button-row">
+            <button id="mod-S" class="mod-btn selected" onclick="setMod('S')">SINGLE</button>
+            <button id="mod-D" class="mod-btn" onclick="setMod('D')">DOUBLE</button>
+            <button id="mod-T" class="mod-btn" onclick="setMod('T')">TREBLE</button>
+        </div>
+        <div id="grid"></div>
+        <div class="button-row" style="margin-top:6px;">
+            <button onclick="handleInput(25, 'S')">25</button>
+            <button onclick="handleInput(50, 'D')">BULL</button>
+            <button style="background:#400" onclick="handleInput(0, 'M')">MISS</button>
+        </div>
+        <div class="action-row">
+            <button style="background:#333" onclick="undo()">UNDO</button>
+            <button style="background:#1b5e20; flex:2" onclick="endTurn()">END TURN</button>
+        </div>
+    </div>
+
+    <div id="simple-input-container">
+        <div id="simple-display">0</div>
+        <div id="simple-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+            <button class="num-btn" onclick="pressSimple(1)">1</button>
+            <button class="num-btn" onclick="pressSimple(2)">2</button>
+            <button class="num-btn" onclick="pressSimple(3)">3</button>
+            <button class="num-btn" onclick="pressSimple(4)">4</button>
+            <button class="num-btn" onclick="pressSimple(5)">5</button>
+            <button class="num-btn" onclick="pressSimple(6)">6</button>
+            <button class="num-btn" onclick="pressSimple(7)">7</button>
+            <button class="num-btn" onclick="pressSimple(8)">8</button>
+            <button class="num-btn" onclick="pressSimple(9)">9</button>
+            <button style="background:#400" onclick="clearSimple()">CLR</button>
+            <button class="num-btn" onclick="pressSimple(0)">0</button>
+            <button style="background:#1b5e20" onclick="submitSimple()">ENTER</button>
+        </div>
+    </div>
 </div>
 
 <script>
-/* your entire original JS stays exactly the same */
+    const chart = {
+        170:"T20 T20 BULL",167:"T20 T19 BULL",164:"T20 T18 BULL",161:"T20 T17 BULL",160:"T20 T20 D20",158:"T20 T20 D19",157:"T20 T19 D20",156:"T20 T20 D18",155:"T20 T19 D19",154:"T20 T18 D20",
+        153:"T20 T19 D18",152:"T20 T20 D16",151:"T20 T17 D20",150:"T20 T18 D18",149:"T20 T19 D16",148:"T20 T20 D14",147:"T20 T17 D18",146:"T20 T18 D16",145:"T20 T19 D14",144:"T20 T20 D12",
+        143:"T20 T17 D16",142:"T20 T14 D20",141:"T20 T19 D12",140:"T20 T20 D10",139:"T20 T13 D20",138:"T20 T18 D12",137:"T20 T15 D16",136:"T20 T20 D8",135:"25 T20 BULL",134:"T20 T14 D16",
+        133:"T20 T19 D8",132:"25 T19 BULL",131:"T20 T13 D16",130:"T20 T20 D5",129:"T19 T12 D18",128:"T18 T14 D16",127:"T20 T17 D8",126:"T19 T19 D6",125:"T18 T13 D16",124:"T20 T16 D8",
+        123:"T19 T16 D9",122:"T18 T20 D4",121:"T20 T11 D14",120:"T20 20 D20",119:"T19 T12 D13",118:"T20 18 D20",117:"T20 17 D20",116:"T19 19 D20",115:"T19 18 D20",114:"T20 14 D20",
+        113:"T19 16 D20",112:"T20 20 D16",111:"T19 14 D20",110:"T20 10 D20",109:"T20 9 D20",108:"T20 16 D16",107:"T20 15 D16",106:"T20 6 D20",105:"T19 16 D16",104:"T16 16 D20",
+        103:"T19 6 D20",102:"T20 10 D16",101:"T20 9 D16",100:"T20 D20",99:"T19 10 D16",98:"T20 D19",97:"T19 D20",96:"T20 D18",95:"T19 D19",94:"T18 D20",
+        93:"T19 D18",92:"T20 D16",91:"T17 D20",90:"T20 D15",89:"T19 D16",88:"T20 D14",87:"T17 D18",86:"T18 D16",85:"T15 D20",84:"T20 D12",
+        83:"T17 D16",82:"T14 D20",81:"T19 D12",80:"T20 D10",79:"T19 D11",78:"T18 D12",77:"T19 D10",76:"T16 D14",75:"T17 D12",74:"T14 D16",
+        73:"T19 D8",72:"T16 D12",71:"T13 D16",70:"T18 D8",69:"T19 D6",68:"T16 D10",67:"T9 D20",66:"T10 D18",65:"T11 D16",64:"T16 D8",
+        63:"T17 D6",62:"T10 D16",61:"T15 D8",60:"20 D20",59:"19 D20",58:"18 D20",57:"17 D20",56:"16 D20",55:"15 D20",54:"14 D20",
+        53:"13 D20",52:"12 D20",51:"11 D20",50:"10 D20",49:"9 D20",48:"8 D20",47:"15 D16",46:"6 D20",45:"13 D16",44:"12 D16",43:"11 D16",42:"10 D16",41:"9 D16",
+        40:"D20",39:"7 D16",38:"D19",37:"5 D16",36:"D18",35:"3 D16",34:"D17",33:"1 D16",32:"D16",31:"15 D8",
+        30:"D15",29:"13 D8",28:"D14",27:"11 D8",26:"D13",25:"9 D8",24:"D12",23:"7 D8",22:"D11",21:"5 D8",
+        20:"D10",19:"3 D8",18:"D9",17:"1 D8",16:"D8",15:"7 D4",14:"D7",13:"5 D4",12:"D6",11:"3 D4",
+        10:"D5",9:"1 D4",8:"D4",7:"3 D2",6:"D3",5:"1 D2",4:"D2",3:"1 D1",2:"D1"
+    };
+
+    let startScore = 501;
+    let players = [
+        {name:"PLAYER 1",score:501,totalPts:0,totalDarts:0, legs:0},
+        {name:"PLAYER 2",score:501,totalPts:0,totalDarts:0, legs:0}
+    ];
+    let currentIdx = 0, turnDarts = [], modifier = 'S', isGameOver = false;
+    let guideEnabled = true, isSimpleMode = true, showAvgs = false, simpleValue = "";
+
+    function toggleGuide() {
+        guideEnabled = !guideEnabled;
+        const btn = document.getElementById('toggle-guide');
+        btn.innerText = guideEnabled ? "ON" : "OFF";
+        btn.classList.toggle('on', guideEnabled);
+        render();
+    }
+
+    function toggleAvg() {
+        showAvgs = !showAvgs;
+        const btn = document.getElementById('toggle-avg');
+        btn.innerText = showAvgs ? "ON" : "OFF";
+        btn.classList.toggle('on', showAvgs);
+        render();
+    }
+
+    function toggleMode() {
+        isSimpleMode = !isSimpleMode;
+        document.getElementById('keypad').style.display = isSimpleMode ? 'none' : 'block';
+        document.getElementById('simple-input-container').style.display = isSimpleMode ? 'flex' : 'none';
+        document.getElementById('slots-ui').style.visibility = isSimpleMode ? 'hidden' : 'visible';
+        document.getElementById('toggle-mode').innerText = isSimpleMode ? "SIMPLE" : "DART-BY-DART";
+        resetTurn();
+    }
+
+    function editName(idx) {
+        let n = prompt("Name:", players[idx].name);
+        if(n) { players[idx].name = n.toUpperCase(); render(); }
+    }
+
+    function setGameType() {
+        let val = prompt("Enter Game Score (e.g. 301, 501, 701):", startScore);
+        if (val && !isNaN(val)) {
+            startScore = parseInt(val);
+            resetGame(false);
+        }
+    }
+
+    function setMod(m) {
+        modifier = m;
+        document.querySelectorAll('.mod-btn').forEach(b => b.classList.toggle('selected', b.id === 'mod-'+m));
+    }
+
+    function handleInput(val, forcedMod) {
+        if (turnDarts.length >= 3 || isGameOver) return;
+        let activeMod = forcedMod || modifier;
+        let pts = 0; let label = "";
+        
+        if (activeMod === 'M') { pts = 0; label = "M"; }
+        else if (val === 25) { pts = 25; label = "25"; }
+        else if (val === 50) { pts = 50; label = "BULL"; }
+        else {
+            let mult = (activeMod === 'D') ? 2 : (activeMod === 'T') ? 3 : 1;
+            pts = val * mult;
+            label = (activeMod === 'S' ? "" : activeMod) + val;
+        }
+
+        let p = players[currentIdx];
+        if (p.score - pts === 0 && (activeMod === 'D' || val === 50)) {
+            p.score = 0; p.totalPts += pts; p.totalDarts += (turnDarts.length + 1);
+            turnDarts.push({pts, label: "WIN"}); 
+            p.legs++;
+            render(); showWinScreen();
+        } else if (p.score - pts < 2) {
+            alert("BUST"); endTurn(true); 
+        } else {
+            p.score -= pts; turnDarts.push({pts, label});
+            setMod('S'); render();
+        }
+    }
+
+    function pressSimple(n) {
+        if (simpleValue.length < 3) {
+            simpleValue += n;
+            document.getElementById('simple-display').innerText = simpleValue;
+        }
+    }
+    function clearSimple() {
+        simpleValue = "";
+        document.getElementById('simple-display').innerText = "0";
+    }
+    function submitSimple() {
+        let val = parseInt(simpleValue) || 0;
+        if (simpleValue === "0" || simpleValue === "") {
+            players[currentIdx].totalDarts += 3;
+            currentIdx = (currentIdx + 1) % 2;
+            clearSimple(); render(); return;
+        }
+        if (val > 180) { alert("Invalid Score"); clearSimple(); return; }
+        
+        let p = players[currentIdx];
+        if (p.score - val === 0) {
+            p.score = 0; p.totalPts += val; p.totalDarts += 3;
+            p.legs++;
+            render(); showWinScreen();
+        } else if (p.score - val < 2) {
+            alert("BUST"); p.totalDarts += 3; currentIdx = (currentIdx + 1) % 2;
+        } else {
+            p.score -= val; p.totalPts += val; p.totalDarts += 3;
+            currentIdx = (currentIdx + 1) % 2;
+        }
+        clearSimple(); render();
+    }
+
+    function endTurn(isBust = false) {
+        if (!isGameOver) {
+            let p = players[currentIdx];
+            if (!isBust) {
+                p.totalPts += turnDarts.reduce((a, b) => a + b.pts, 0);
+                p.totalDarts += turnDarts.length;
+            } else { p.totalDarts += 3; }
+            resetTurn();
+        }
+    }
+
+    function resetTurn() {
+        turnDarts = []; 
+        if (!isSimpleMode) currentIdx = (currentIdx + 1) % 2;
+        setMod('S'); 
+        render();
+    }
+
+    function undo() {
+        if (turnDarts.length > 0 && !isGameOver) {
+            let last = turnDarts.pop();
+            players[currentIdx].score += last.pts;
+            render();
+        }
+    }
+
+    function showWinScreen() {
+        isGameOver = true;
+        document.getElementById('win-name').innerText = players[currentIdx].name;
+        document.getElementById('modal').style.display = 'flex';
+    }
+
+    function resetGame(fullMatchReset = false) {
+        players.forEach(p => { 
+            p.score = startScore; 
+            p.totalPts = 0; 
+            p.totalDarts = 0; 
+            if (fullMatchReset === 'total') p.legs = 0; 
+        });
+        turnDarts = []; currentIdx = 0; isGameOver = false;
+        document.getElementById('modal').style.display = 'none';
+        render();
+    }
+
+    function render() {
+        let currentVisitTotal = 0;
+        players.forEach((p, i) => {
+            document.getElementById(`p${i}-name`).innerText = `${p.name} (${p.legs})`;
+            document.getElementById(`p${i}-score`).innerText = p.score;
+            let avg = p.totalDarts > 0 ? (p.totalPts / p.totalDarts * 3).toFixed(2) : "0.00";
+            let avgEl = document.getElementById(`p${i}-avg`);
+            avgEl.innerText = "AVG: " + avg;
+            avgEl.className = 'avg' + (showAvgs ? ' visible' : '');
+            document.getElementById(`p${i}-card`).className = 'player-card' + (currentIdx === i ? ' active' : '');
+        });
+
+        turnDarts.forEach(d => currentVisitTotal += d.pts);
+        document.getElementById('visit-line').innerText = isSimpleMode ? "" : `SCORE = ${currentVisitTotal}`;
+        
+        let guide = "";
+        if (guideEnabled && !isGameOver) {
+            let score = players[currentIdx].score;
+            let dartsLeft = 3 - turnDarts.length;
+            if (score <= 170 && chart[score]) {
+                let pathArray = chart[score].split(" ");
+                guide = pathArray.slice(0, dartsLeft).join(" ");
+            }
+        }
+        document.getElementById('guide-line').innerText = guide;
+
+        for (let i = 0; i < 3; i++) {
+            let slot = document.getElementById(`dart-${i}`);
+            if(slot) {
+                slot.innerText = turnDarts[i]?.label || "";
+                slot.className = 'dart' + (turnDarts[i] ? ' filled' : '');
+            }
+        }
+    }
+
+    const grid = document.getElementById('grid');
+    for (let i = 1; i <= 20; i++) {
+        let b = document.createElement('button');
+        b.className = 'num-btn'; b.innerText = i; b.onclick = () => handleInput(i);
+        grid.appendChild(b);
+    }
+    
+    window.onload = () => { render(); };
 </script>
 </body>
 </html>
